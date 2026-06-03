@@ -140,6 +140,7 @@ include(
   ":utilities:treeview",
 
   // Core (LSP-adjacent — still used by editor and agent)
+  ":core:lsp-models",
   ":core:indexing-api",
   ":core:indexing-core",
   ":core:lsp-api",
