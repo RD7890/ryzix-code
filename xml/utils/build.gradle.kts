@@ -41,6 +41,5 @@ dependencies {
 
     implementation(projects.core.common)
     implementation(projects.logging.logger)
-    implementation(projects.xml.aaptcompiler)
     
 }

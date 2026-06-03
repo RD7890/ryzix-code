@@ -73,8 +73,6 @@ dependencies {
     implementation(projects.editor.lexers)
     implementation(projects.event.eventbusAndroid)
     implementation(projects.event.eventbusEvents)
-    implementation(projects.java.lsp)
     implementation(projects.utilities.shared)
-    implementation(projects.xml.lsp)
 
 }
