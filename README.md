@@ -1,140 +1,173 @@
-<p align="left">
-  <img src="https://avatars.githubusercontent.com/u/234419170?s=400&u=43571ebf481969baafb8399813ad57f46c19eb95&v=4" alt="Ryzix Code" width="80" height="80"/>
-</p>
+<div align="center">
 
-<h2 align="left"><b>Ryzix Code</b></h2>
-<p align="left">A lightweight, agentic code editor for Android — Cursor-style AI that reads, writes, and runs code autonomously.</p>
+  <img src="images/icon.png" alt="Ryzix Code" width="100" height="100"/>
 
-<p align="left">
-  <img src="https://img.shields.io/badge/Status-Alpha-orange" alt="Alpha"/>
-  <img src="https://img.shields.io/badge/License-GPLv3-blue.svg" alt="GPLv3"/>
-  <img src="https://img.shields.io/badge/AI-Gemini%202.0-4285F4?logo=google" alt="Gemini"/>
-  <img src="https://img.shields.io/badge/Platform-Android-3DDC84?logo=android" alt="Android"/>
-</p>
+  # Ryzix Code
 
----
+  **An agentic Android code editor — Cursor AI, running natively on your device.**
 
-## What is Ryzix Code?
+  [![Build](https://github.com/RD7890/ryzix-code/actions/workflows/build.yml/badge.svg)](https://github.com/RD7890/ryzix-code/actions)
+  [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](LICENSE)
+  [![Platform](https://img.shields.io/badge/Platform-Android%208%2B-3DDC84?logo=android)](https://developer.android.com)
+  [![AI](https://img.shields.io/badge/AI-Gemini%20%7C%20GPT%20%7C%20Claude-4285F4)](https://aistudio.google.com)
+  [![Status](https://img.shields.io/badge/Status-Alpha-orange)]()
 
-Ryzix Code is a **stripped-down, agentic Android IDE** — think Cursor AI, but running natively on your Android device.
+  </div>
 
-It's based on [Android Code Studio](https://github.com/RD7890/android-code-studio), but with all the heavy infrastructure removed and replaced by a **Gemini-powered autonomous agent** that can:
+  ---
 
-- 📄 Read and understand your code
-- ✏️ Write and surgically edit files
-- 🖥️ Run terminal commands autonomously (gradle, git, shell)
-- 🔍 Search and grep across your codebase
-- 🔁 Loop autonomously until the task is complete — without you lifting a finger
+  ## What is Ryzix Code?
 
----
+  Ryzix Code is a **native Android code editor with an autonomous AI agent built in** — think Cursor or Windsurf, but running entirely on your phone or tablet.
 
-## What was stripped vs what was kept
+  You describe a task. The agent reads your code, edits files, runs Gradle, diffs the result, and loops until it's done — without you lifting a finger.
 
-| Removed (too heavy) | Kept |
-|---|---|
-| Java Language Server | ✅ Code editor (sora-editor) |
-| Kotlin Language Server | ✅ Terminal emulator (Termux) |
-| XML Language Server | ✅ File manager |
-| Visual UI Designer | ✅ Git integration |
-| SDK / NDK Manager | ✅ Basic Gradle support |
-| XML inflater & layout editor | ✅ Event bus, logging |
-| Heavy indexing engine | ✅ **AI Agent (new)** |
+  It's based on [AndroidIDE](https://github.com/AndroidIDEOfficial/AndroidIDE), stripped of its heavy Java/Kotlin/XML language-server infrastructure and rebuilt around a **multi-provider AI agent** that supports Gemini, OpenAI, Claude, Grok, DeepSeek, and local LLMs.
 
----
+  ---
 
-## AI Agent — How it works
+  ## How the Agent Works
 
-The agent is built on the **ReAct loop** (Reason → Act → Observe):
+  The agent runs a **ReAct loop** (Reason → Act → Observe) using your chosen LLM:
 
-```
-User: "Add dark mode support to MainActivity"
- │
- ├─ 🔍 list_dir(".")              → finds project structure
- ├─ 📄 file_read("MainActivity.kt") → reads the file
- ├─ 🔍 grep("setTheme|DayNight") → finds existing theme code
- ├─ ✏️ file_edit(...)             → adds dark mode toggle
- ├─ 🖥️ terminal("./gradlew assembleDebug") → builds to verify
- └─ ✅ "Done! Dark mode added and build passes."
-```
+  ```
+  You: "Add a dark-mode toggle to MainActivity"
 
-### Agent Tools
+  Agent:
+    → list_dir(".")               discovers project layout
+    → file_read("MainActivity.kt")  reads the file
+    → grep("setTheme|DayNight")   finds existing theme usage
+    → file_edit(...)              surgically inserts the toggle
+    → terminal("./gradlew assembleDebug")  verifies the build
+    → "Done — dark mode added and build passes ✓"
+  ```
 
-| Tool | What it does |
-|---|---|
-| `file_read` | Read any file, with optional line range |
-| `file_write` | Write/create a file |
-| `file_edit` | Surgically replace a string in a file |
-| `terminal` | Run any shell command (60s timeout) |
-| `grep` | Search across all files with regex |
-| `list_dir` | List files and folders |
+  The agent has **permission gates** — it asks before modifying files outside the project, running destructive commands, or accessing the internet.
 
----
+  ---
 
-## Stack
+  ## Agent Tools
 
-- **Language**: Kotlin
-- **Editor core**: [sora-editor](https://github.com/Rosemoe/sora-editor)
-- **Terminal**: Termux emulator
-- **AI**: Google Gemini 2.0 Flash (function calling)
-- **Build**: Gradle KTS + Android AGP
+  | Tool | Description |
+  |------|-------------|
+  | `file_read` | Read any file, with optional line range |
+  | `file_write` | Create or overwrite a file |
+  | `file_edit` | Surgical find-and-replace inside a file |
+  | `terminal` | Run any shell command (Gradle, Git, shell scripts) |
+  | `grep` | Regex search across the entire codebase |
+  | `list_dir` | List files and directories |
+  | `project_tree` | Get a compact tree of the full project |
 
----
+  ---
 
-## Getting Started
+  ## Supported AI Providers
 
-### 1. Prerequisites
+  | Provider | Models |
+  |----------|--------|
+  | Google Gemini | Gemini 2.0 Flash, Gemini 1.5 Pro |
+  | OpenAI | GPT-4o, GPT-4 Turbo |
+  | Anthropic | Claude 3.5 Sonnet, Claude 3 Opus |
+  | xAI | Grok-2 |
+  | DeepSeek | DeepSeek-Coder V2 |
+  | Local LLM | Ollama-compatible endpoints |
 
-- Android device running Android 8.0+ (API 26+)
-- Gemini API key — get one free at [aistudio.google.com](https://aistudio.google.com)
+  ---
 
-### 2. Build
+  ## What Was Stripped vs What Was Kept
 
-```bash
-git clone https://github.com/RD7890/ryzix-code.git
-cd ryzix-code
-./gradlew assembleDebug
-```
+  | Removed | Kept |
+  |---------|------|
+  | Java Language Server | ✅ Code editor (sora-editor) |
+  | Kotlin Language Server | ✅ Terminal emulator (Termux) |
+  | XML Language Server | ✅ File manager + Git integration |
+  | Visual Layout Designer | ✅ Gradle build support |
+  | SDK / NDK Manager | ✅ Event bus + logging |
+  | Heavy indexing engine | ✅ **AI Agent (new)** |
+  | AAPT2 compilation pipeline | ✅ XML resource parsing (basic) |
 
-### 3. Configure your API key
+  ---
 
-In the app → Settings → paste your Gemini API key.
+  ## Stack
 
----
+  | Layer | Technology |
+  |-------|-----------|
+  | Language | Kotlin |
+  | Editor core | [sora-editor](https://github.com/Rosemoe/sora-editor) |
+  | Terminal | Termux emulator |
+  | AI | Gemini / GPT / Claude / Grok / DeepSeek / local LLM |
+  | Build | Gradle KTS + Android AGP 8.x |
+  | Min SDK | Android 8.0 (API 26) |
 
-## Architecture
+  ---
 
-```
-ryzix-code/
-├── ai/
-│   └── agent/                   # 🤖 AI Agent module
-│       └── src/main/kotlin/com/ryzix/agent/
-│           ├── llm/             # LLM providers (Gemini, extensible)
-│           ├── tools/           # File, terminal, search tools
-│           ├── loop/            # Autonomous ReAct loop
-│           ├── context/         # Project context + conversation history
-│           └── ui/              # Agent panel Fragment + ViewModel
-├── editor/                      # Code editor (sora-editor)
-├── termux/                      # Terminal emulator
-├── core/                        # Core app logic
-├── event/                       # Event bus
-├── logging/                     # Logging
-└── utilities/                   # Shared utilities
-```
+  ## Project Layout
 
----
+  ```
+  ryzix-code/
+  ├── ai/agent/           # Autonomous AI agent (LLM loop, tools, permissions)
+  ├── core/app/           # Main application module
+  ├── core/projects/      # Project & module model
+  ├── editor/             # Code editor (sora-editor integration)
+  ├── termux/             # Terminal emulator
+  ├── xml/                # XML parsing utilities
+  ├── tooling/            # Gradle tooling API
+  ├── event/              # Event bus
+  ├── logging/            # Logging infrastructure
+  └── utilities/          # Shared utilities, preferences, templates
+  ```
 
-## Roadmap
+  ---
 
-- [ ] Diff view — show agent edits as a unified diff before applying
-- [ ] Multi-file context — agent reads all open files automatically
-- [ ] Voice input — speak tasks to the agent
-- [ ] Plugin system — add custom agent tools
-- [ ] Offline mode — local LLM via llama.cpp
+  ## Getting Started
 
----
+  ### Prerequisites
 
-## License
+  - Android 8.0+ device (API 26+)
+  - An API key for your chosen AI provider  
+    → Free Gemini key at [aistudio.google.com](https://aistudio.google.com)
 
-GPLv3 — see [LICENSE](./LICENSE)
+  ### Build from Source
 
-Based on [Android Code Studio](https://github.com/RD7890/android-code-studio) by RD7890, which is a fork of [AndroidIDE](https://github.com/AndroidIDEOfficial/AndroidIDE).
+  ```bash
+  git clone https://github.com/RD7890/ryzix-code.git
+  cd ryzix-code
+  ./gradlew :core:app:assembleRelease
+  ```
+
+  ### Configure
+
+  1. Install the APK on your device
+  2. Open **Settings → AI Provider**
+  3. Paste your API key and select your preferred model
+  4. Open a project and start a conversation with the agent
+
+  ---
+
+  ## Roadmap
+
+  - [ ] Diff preview — show agent edits before applying
+  - [ ] Multi-file context — feed all open files to the agent automatically  
+  - [ ] Voice input — dictate tasks hands-free
+  - [ ] Plugin system — write custom agent tools in Kotlin
+  - [ ] Code review mode — agent reviews PRs and suggests fixes
+  - [ ] Offline mode — llama.cpp for fully private, on-device inference
+
+  ---
+
+  ## Contributing
+
+  Pull requests are welcome. For major changes please open an issue first.
+
+  1. Fork the repo
+  2. Create a feature branch: `git checkout -b feature/my-feature`
+  3. Commit your changes: `git commit -m 'feat: add my feature'`
+  4. Push and open a PR
+
+  ---
+
+  ## License
+
+  **GPL v3** — see [LICENSE](./LICENSE)
+
+  Based on [AndroidIDE](https://github.com/AndroidIDEOfficial/AndroidIDE) and [Android Code Studio](https://github.com/RD7890/android-code-studio) by RD7890.
+  

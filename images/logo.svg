@@ -1,0 +1,76 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+    <defs>
+      <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+        <stop offset="0%" style="stop-color:#0F0F1A"/>
+        <stop offset="100%" style="stop-color:#1A1A2E"/>
+      </linearGradient>
+      <linearGradient id="accent" x1="0%" y1="0%" x2="100%" y2="100%">
+        <stop offset="0%" style="stop-color:#7C3AED"/>
+        <stop offset="100%" style="stop-color:#2563EB"/>
+      </linearGradient>
+      <linearGradient id="spark" x1="0%" y1="0%" x2="100%" y2="100%">
+        <stop offset="0%" style="stop-color:#A78BFA"/>
+        <stop offset="100%" style="stop-color:#60A5FA"/>
+      </linearGradient>
+      <filter id="glow">
+        <feGaussianBlur stdDeviation="4" result="blur"/>
+        <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+      </filter>
+    </defs>
+
+    <!-- Background rounded square -->
+    <rect width="512" height="512" rx="96" fill="url(#bg)"/>
+
+    <!-- Subtle grid lines -->
+    <g opacity="0.06" stroke="#7C3AED" stroke-width="1">
+      <line x1="0" y1="128" x2="512" y2="128"/>
+      <line x1="0" y1="256" x2="512" y2="256"/>
+      <line x1="0" y1="384" x2="512" y2="384"/>
+      <line x1="128" y1="0" x2="128" y2="512"/>
+      <line x1="256" y1="0" x2="256" y2="512"/>
+      <line x1="384" y1="0" x2="384" y2="512"/>
+    </g>
+
+    <!-- Terminal window frame -->
+    <rect x="72" y="140" width="368" height="248" rx="16" fill="#0D0D1A" stroke="#7C3AED" stroke-width="2" opacity="0.9"/>
+
+    <!-- Terminal title bar -->
+    <rect x="72" y="140" width="368" height="40" rx="16" fill="#1E1B4B"/>
+    <rect x="72" y="160" width="368" height="20" fill="#1E1B4B"/>
+
+    <!-- Traffic lights -->
+    <circle cx="108" cy="160" r="7" fill="#FF5F57"/>
+    <circle cx="132" cy="160" r="7" fill="#FEBC2E"/>
+    <circle cx="156" cy="160" r="7" fill="#28C840"/>
+
+    <!-- Terminal text: prompt -->
+    <text x="100" y="215" font-family="monospace" font-size="22" fill="#A78BFA" filter="url(#glow)">$</text>
+    <text x="120" y="215" font-family="monospace" font-size="22" fill="#E2E8F0"> ryzix </text>
+    <text x="220" y="215" font-family="monospace" font-size="22" fill="#60A5FA">"fix bug"</text>
+
+    <!-- Code line 2 -->
+    <text x="100" y="248" font-family="monospace" font-size="16" fill="#4ADE80" opacity="0.85">→ reading MainActivity.kt</text>
+
+    <!-- Code line 3 -->
+    <text x="100" y="274" font-family="monospace" font-size="16" fill="#4ADE80" opacity="0.85">→ applying patch...</text>
+
+    <!-- Code line 4 -->
+    <text x="100" y="300" font-family="monospace" font-size="16" fill="#A78BFA" opacity="0.85">→ build success ✓</text>
+
+    <!-- Cursor blink bar -->
+    <rect x="100" y="320" width="12" height="20" rx="2" fill="#7C3AED" opacity="0.9"/>
+
+    <!-- AI spark icon (top-right corner) -->
+    <g filter="url(#glow)" transform="translate(370, 60)">
+      <!-- Star/spark shape -->
+      <polygon points="42,10 47,30 67,30 51,42 57,62 42,50 27,62 33,42 17,30 37,30"
+               fill="url(#spark)" opacity="0.95"/>
+    </g>
+
+    <!-- Bottom label -->
+    <text x="256" y="430" font-family="system-ui, -apple-system, sans-serif" font-size="36"
+          font-weight="700" fill="url(#spark)" text-anchor="middle" letter-spacing="3"
+          filter="url(#glow)">RYZIX</text>
+    <text x="256" y="462" font-family="system-ui, -apple-system, sans-serif" font-size="16"
+          fill="#6B7280" text-anchor="middle" letter-spacing="6">CODE</text>
+  </svg>
