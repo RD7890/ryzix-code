@@ -139,6 +139,16 @@ include(
   ":utilities:templates-impl",
   ":utilities:treeview",
 
+  // Core (LSP-adjacent — still used by editor and agent)
+  ":core:indexing-api",
+  ":core:indexing-core",
+  ":core:lsp-api",
+
+  // Gradle tooling
+  ":tooling:api",
+  ":tooling:plugin-config",
+  ":tooling:impl",
+
   // XML (basic parsing/utils only — no LSP)
   ":xml:dom",
   ":xml:resources-api",

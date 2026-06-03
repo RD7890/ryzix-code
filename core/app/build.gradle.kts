@@ -270,9 +270,6 @@ dependencies {
   implementation(projects.event.eventbus)
   implementation(projects.event.eventbusAndroid)
   implementation(projects.event.eventbusEvents)
-  implementation(projects.java.javacServices)
-  implementation(projects.java.lspSetup)
-  implementation(projects.java.lsp)
   implementation(projects.logging.idestats)
   implementation(projects.logging.logsender)
   implementation(projects.termux.application)
@@ -287,10 +284,6 @@ dependencies {
   implementation(projects.utilities.templatesApi)
   implementation(projects.utilities.templatesImpl)
   implementation(projects.utilities.treeview)
-  implementation(projects.utilities.uidesigner)
-  implementation(projects.utilities.xmlInflater)
-  implementation(projects.xml.aaptcompiler)
-  implementation(projects.xml.lsp)
   implementation(projects.xml.utils)
 
   // tooling.impl is now bundled in-process (single JVM) instead of spawning a separate process
