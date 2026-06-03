@@ -50,7 +50,6 @@ import com.tom.rv2ide.eventbus.events.editor.DocumentSelectedEvent
 import com.tom.rv2ide.flashbar.Flashbar
 import com.tom.rv2ide.lsp.api.ILanguageClient
 import com.tom.rv2ide.lsp.api.ILanguageServer
-import com.tom.rv2ide.lsp.java.utils.CancelChecker
 import com.tom.rv2ide.lsp.models.Command
 import com.tom.rv2ide.lsp.models.DefinitionParams
 import com.tom.rv2ide.lsp.models.DefinitionResult
@@ -987,7 +986,7 @@ constructor(
 
   private fun logError(err: Throwable?, action: String) {
     err ?: return
-    if (CancelChecker.isCancelled(err)) {
+    if (err is kotlinx.coroutines.CancellationException) {
       log.warn("{} has been cancelled", action)
     } else {
       log.error("{} failed", action)
