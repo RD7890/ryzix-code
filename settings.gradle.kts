@@ -146,6 +146,9 @@ include(
   ":core:lsp-api",
 
   // Gradle tooling
+  ":tooling:builder-model-impl",
+  ":tooling:events",
+  ":tooling:model",
   ":tooling:api",
   ":tooling:plugin-config",
   ":tooling:impl",
