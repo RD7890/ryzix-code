@@ -1,75 +1,173 @@
 package com.ryzix.agent.llm
 
-import com.google.ai.client.generativeai.GenerativeModel
-import com.google.ai.client.generativeai.type.Schema
-import com.google.ai.client.generativeai.type.Tool
-import com.google.ai.client.generativeai.type.content
-import com.google.ai.client.generativeai.type.defineFunction
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import okhttp3.MediaType.Companion.toMediaType
+import okhttp3.OkHttpClient
+import okhttp3.Request
+import okhttp3.RequestBody.Companion.toRequestBody
+import org.json.JSONArray
+import org.json.JSONObject
+import java.util.concurrent.TimeUnit
 
 /**
  * Google Gemini implementation of [LLMProvider].
- * Uses gemini-2.0-flash with function calling for tool use.
+ *
+ * Calls the Gemini REST API directly via OkHttp + org.json (built-in Android).
+ * This avoids any dependency on the Gemini Android SDK whose function-calling
+ * API changes frequently between minor versions.
+ *
+ * Endpoint: POST /v1beta/models/gemini-2.0-flash:generateContent
  */
 class GeminiProvider(private val apiKey: String) : LLMProvider {
 
-    private val modelName = "gemini-2.0-flash"
+    private val client = OkHttpClient.Builder()
+        .connectTimeout(30, TimeUnit.SECONDS)
+        .readTimeout(60, TimeUnit.SECONDS)
+        .writeTimeout(30, TimeUnit.SECONDS)
+        .build()
+
+    private val JSON = "application/json; charset=utf-8".toMediaType()
+    private val BASE = "https://generativelanguage.googleapis.com/v1beta/models"
+    private val MODEL = "gemini-2.0-flash"
 
     override suspend fun chat(
         history: List<LLMProvider.Message>,
         tools: List<LLMProvider.ToolDefinition>,
     ): LLMProvider.LLMResponse = withContext(Dispatchers.IO) {
         try {
-            val geminiTools = tools.map { def ->
-                Tool(listOf(defineFunction(
-                    name = def.name,
-                    description = def.description,
-                    parameters = def.parameters.map { (name, param) ->
-                        when (param.type) {
-                            "boolean" -> Schema.boolean(name, param.description)
-                            "integer" -> Schema.integer(name, param.description)
-                            else      -> Schema.str(name, param.description)
-                        }
-                    },
-                )))
+            val body = buildRequestJson(history, tools)
+            val request = Request.Builder()
+                .url("$BASE/$MODEL:generateContent?key=$apiKey")
+                .post(body.toString().toRequestBody(JSON))
+                .build()
+
+            val response = client.newCall(request).execute()
+            val responseText = response.body?.string() ?: ""
+
+            if (!response.isSuccessful) {
+                return@withContext LLMProvider.LLMResponse.Error(
+                    "Gemini API error ${response.code}: $responseText"
+                )
             }
 
-            val model = GenerativeModel(
-                modelName = modelName,
-                apiKey = apiKey,
-                tools = geminiTools,
-                systemInstruction = content { text(SYSTEM_PROMPT) },
-            )
-
-            val geminiHistory = history.dropLast(1).map { msg ->
-                content(role = msg.role.toGeminiRole()) { text(msg.content) }
-            }
-            val chat = model.startChat(history = geminiHistory)
-            val lastMessage = history.last()
-            val response = chat.sendMessage(lastMessage.content)
-
-            val functionCalls = response.functionCalls
-            if (functionCalls.isNotEmpty()) {
-                LLMProvider.LLMResponse.ToolUse(functionCalls.map { fc ->
-                    LLMProvider.ToolCall(
-                        id = fc.name + "_" + System.currentTimeMillis(),
-                        name = fc.name,
-                        args = fc.args.mapValues { it.value.toString() },
-                    )
-                })
-            } else {
-                LLMProvider.LLMResponse.Text(response.text ?: "")
-            }
+            parseResponse(responseText)
         } catch (e: Exception) {
-            LLMProvider.LLMResponse.Error(e.message ?: "Unknown Gemini error")
+            LLMProvider.LLMResponse.Error(e.message ?: "Unknown error")
         }
     }
 
-    private fun LLMProvider.Role.toGeminiRole(): String = when (this) {
-        LLMProvider.Role.USER      -> "user"
-        LLMProvider.Role.ASSISTANT -> "model"
-        LLMProvider.Role.TOOL      -> "user"
+    // ── Request builder ────────────────────────────────────────────────────
+
+    private fun buildRequestJson(
+        history: List<LLMProvider.Message>,
+        tools: List<LLMProvider.ToolDefinition>,
+    ): JSONObject {
+        val contents = JSONArray()
+        for (msg in history) {
+            val role = when (msg.role) {
+                LLMProvider.Role.USER      -> "user"
+                LLMProvider.Role.ASSISTANT -> "model"
+                LLMProvider.Role.TOOL      -> "user"
+            }
+            val parts = JSONArray()
+            if (msg.content.isNotEmpty()) {
+                parts.put(JSONObject().put("text", msg.content))
+            }
+            // Encode outgoing tool calls as model parts
+            for (tc in msg.toolCalls) {
+                val argsJson = JSONObject()
+                tc.args.forEach { (k, v) -> argsJson.put(k, v) }
+                parts.put(JSONObject().put("functionCall",
+                    JSONObject().put("name", tc.name).put("args", argsJson)))
+            }
+            // Encode tool results as function response parts
+            for (tr in msg.toolResults) {
+                parts.put(JSONObject().put("functionResponse",
+                    JSONObject()
+                        .put("name", tr.toolCallId.substringBefore("_"))
+                        .put("response", JSONObject().put("output", tr.output))
+                ))
+            }
+            if (parts.length() > 0) {
+                contents.put(JSONObject().put("role", role).put("parts", parts))
+            }
+        }
+
+        val root = JSONObject()
+            .put("contents", contents)
+            .put("systemInstruction", JSONObject().put("parts",
+                JSONArray().put(JSONObject().put("text", SYSTEM_PROMPT))))
+
+        if (tools.isNotEmpty()) {
+            val funcDeclarations = JSONArray()
+            for (def in tools) {
+                val props = JSONObject()
+                val required = JSONArray()
+                for ((pName, pDef) in def.parameters) {
+                    val typeStr = when (pDef.type) {
+                        "boolean" -> "BOOLEAN"
+                        "integer" -> "INTEGER"
+                        else      -> "STRING"
+                    }
+                    props.put(pName, JSONObject()
+                        .put("type", typeStr)
+                        .put("description", pDef.description))
+                    if (pDef.required) required.put(pName)
+                }
+                val params = JSONObject()
+                    .put("type", "OBJECT")
+                    .put("properties", props)
+                if (required.length() > 0) params.put("required", required)
+
+                funcDeclarations.put(JSONObject()
+                    .put("name", def.name)
+                    .put("description", def.description)
+                    .put("parameters", params))
+            }
+            root.put("tools", JSONArray().put(
+                JSONObject().put("function_declarations", funcDeclarations)))
+        }
+
+        return root
+    }
+
+    // ── Response parser ────────────────────────────────────────────────────
+
+    private fun parseResponse(raw: String): LLMProvider.LLMResponse {
+        val root = JSONObject(raw)
+        val candidates = root.optJSONArray("candidates") ?: return LLMProvider.LLMResponse.Error("No candidates in response")
+        val first = candidates.optJSONObject(0) ?: return LLMProvider.LLMResponse.Error("Empty candidate")
+        val content = first.optJSONObject("content") ?: return LLMProvider.LLMResponse.Error("No content")
+        val parts = content.optJSONArray("parts") ?: return LLMProvider.LLMResponse.Error("No parts")
+
+        val toolCalls = mutableListOf<LLMProvider.ToolCall>()
+        val textParts = mutableListOf<String>()
+
+        for (i in 0 until parts.length()) {
+            val part = parts.getJSONObject(i)
+            when {
+                part.has("functionCall") -> {
+                    val fc = part.getJSONObject("functionCall")
+                    val name = fc.getString("name")
+                    val args = mutableMapOf<String, String>()
+                    val argsJson = fc.optJSONObject("args")
+                    argsJson?.keys()?.forEach { k -> args[k] = argsJson.opt(k)?.toString() ?: "" }
+                    toolCalls.add(LLMProvider.ToolCall(
+                        id = "${name}_${System.currentTimeMillis()}",
+                        name = name,
+                        args = args,
+                    ))
+                }
+                part.has("text") -> textParts.add(part.getString("text"))
+            }
+        }
+
+        return when {
+            toolCalls.isNotEmpty() -> LLMProvider.LLMResponse.ToolUse(toolCalls)
+            textParts.isNotEmpty() -> LLMProvider.LLMResponse.Text(textParts.joinToString("\n"))
+            else -> LLMProvider.LLMResponse.Error("Empty response from Gemini")
+        }
     }
 
     companion object {
